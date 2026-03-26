@@ -131,6 +131,7 @@ Functions = {
         
         --| Inventory Items |--
         self.Initial = false
+        self.IsOpen = false
         self.IsDrop = false
         self.IsBusy = false
         self.AddOnLoaded = false
@@ -161,6 +162,7 @@ Functions = {
 
         self.OpenInventory = function()
             self.Initial = true
+            self.IsOpen = true
             self.NuiFocus(true)
 
             Utils.SendNui('open-inventory')
@@ -173,7 +175,6 @@ Functions = {
 
         self.InitInventory = function()
             if not self.Initial then
-                self.OpenInventory()
                 self.Initial = true 
             end
 
@@ -552,6 +553,7 @@ Functions = {
         end
         
         self.CloseInventory = function()
+            self.IsOpen = false
             self.NuiFocus(false)
             SetNuiFocusKeepInput(false)
             Utils.SendNui('close-inventory')

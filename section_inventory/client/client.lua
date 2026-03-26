@@ -355,3 +355,21 @@ RegisterNUICallback('NuisReady',
         cb('ready')
     end
 )
+
+-- Failsafe: if ESC is pressed while inventory state is still open, force-release NUI focus.
+Citizen.CreateThread(function()
+    while true do
+        if not (Inventory and Inventory.IsOpen) then
+            Citizen.Wait(250)
+        else
+            Citizen.Wait(0)
+        end
+
+        if Inventory and Inventory.IsOpen and IsControlJustReleased(0, 322) then -- ESC
+            SetNuiFocus(false, false)
+            SetNuiFocusKeepInput(false)
+            Inventory.CloseInventory()
+            Inventory.IsDrop = false
+        end
+    end
+end)
