@@ -296,7 +296,8 @@ Functions = {
         self.AddAccessories = function()
             local accessories = self.Accessories or {}
             if #accessories == 0 then
-                print('^1ERROR: No accessories found^7')
+                Debug('info', '[Inventory] No accessories found')
+                return
             end
 
             for _, accessory in ipairs(accessories) do
@@ -552,6 +553,7 @@ Functions = {
         
         self.CloseInventory = function()
             self.NuiFocus(false)
+            SetNuiFocusKeepInput(false)
             Utils.SendNui('close-inventory')
         end
 

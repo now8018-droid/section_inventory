@@ -331,14 +331,19 @@ RegisterNetEvent('esx:addWeapon', function(_) Citizen.Wait(100) Inventory.Refres
 RegisterNetEvent('esx:removeWeapon', function(_) Citizen.Wait(100) Inventory.RefreshInventory() end)
 
 RegisterNUICallback('closeNuis',
-    function(_)
+    function(_, cb)
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
         Inventory.CloseInventory()
         Inventory.IsDrop = false
+        if cb then cb('ok') end
     end
 )
 
 RegisterNetEvent(InvEvent('closeNuis'), 
     function()
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
         Inventory.CloseInventory()
         Inventory.IsDrop = false
     end
