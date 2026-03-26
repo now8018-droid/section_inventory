@@ -6,7 +6,7 @@ General = General or {}
     Resource : esx_accessories (ร้านหน้ากาก)
 
     -- Server-Side (ฝั่ง Server) --
-    TriggerEvent("section_inventory:saveAccessories", _source, label, type, skin)
+    TriggerEvent(InvEvent("saveAccessories"), _source, label, type, skin)
 
 ]]--
 
@@ -14,7 +14,7 @@ General = General or {}
 --[[
 
     -- Client-Side (ฝั่ง Client) --
-    TriggerEvent('section_inventory:closeNuis')
+    TriggerEvent(InvEvent('closeNuis'))
 
 ]]--
 
@@ -22,11 +22,11 @@ General = General or {}
 General.Config = {
     Inventory = {
         Main = {
-            Command = 'section_inventory.open',
+            Command = InvCommand('open'),
             Key = 'T' -- อย่าลืมเปลี่ยนชื่อ Command นะครับหากเปลี่ยนปุ่ม เปลี่ยนเป็นชื่ออะไรก็ได้ครับ
         },
         QuickSlot = {
-            Command = 'section_inventory.open.swap',
+            Command = InvCommand('open.swap'),
             Key = 'TAB' -- อย่าลืมเปลี่ยนชื่อ Command นะครับหากเปลี่ยนปุ่ม เปลี่ยนเป็นชื่ออะไรก็ได้ครับ
         }
     },

@@ -1,4 +1,17 @@
 Developer = Developer or {}
+ResourceName = GetCurrentResourceName()
+
+---@param eventName string
+---@return string
+InvEvent = function(eventName)
+    return ('%s:%s'):format(ResourceName, eventName)
+end
+
+---@param commandName string
+---@return string
+InvCommand = function(commandName)
+    return ('%s.%s'):format(ResourceName, commandName)
+end
 
 Developer.Mode = {
     -- Enable developer mode

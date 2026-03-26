@@ -2,7 +2,7 @@
 Inventory = Functions.Inventory()
 
 for index = 1, 7 do
-    local commandName = ('section_inventory_hotbar_%s'):format(index)
+    local commandName = ('%s_hotbar_%s'):format(ResourceName, index)
     RegisterCommand(commandName, 
         function()
             local isDead = Utils.IsDead()

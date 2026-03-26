@@ -25,11 +25,11 @@ RegisterCommand('inv',
         local targetId = args and args[1] and tonumber(args[1])
         if not targetId or targetId <= 0 then return end
 
-        TriggerServerEvent('section_inventory:req:player:open', targetId)
+        TriggerServerEvent(InvEvent('req:player:open'), targetId)
     end, false
 )
 
-RegisterNetEvent('section_inventory:res:player:open', 
+RegisterNetEvent(InvEvent('res:player:open'), 
     function(itemData, targetId)
         Utils.SendNui('set-inventory-type', {
             modal = 'player'
@@ -49,7 +49,7 @@ RegisterNetEvent('section_inventory:res:player:open',
     end
 )
 
-RegisterNetEvent('section_inventory:refreshOtherPlayer', function(targetId, itemData)
+RegisterNetEvent(InvEvent('refreshOtherPlayer'), function(targetId, itemData)
     TargetPlayer = targetId
     if TargetPlayer then
         local Items = OtherPlayerInventory.CompileInventory(itemData)
@@ -60,7 +60,7 @@ RegisterNetEvent('section_inventory:refreshOtherPlayer', function(targetId, item
     end
 end)
 
-RegisterNetEvent('section_inventory:refreshInventory', function()
+RegisterNetEvent(InvEvent('refreshInventory'), function()
     Inventory.RefreshInventory()
 end)
 
@@ -86,7 +86,7 @@ RegisterNUICallback('putPlayer',
         -- end
 
         -- ตัวเอง (source) ให้ของ TargetPlayer (receiver)
-        TriggerServerEvent('section_inventory:req:player:tradeItem', 'put', TargetPlayer, itemType, itemName, finalCount)
+        TriggerServerEvent(InvEvent('req:player:tradeItem'), 'put', TargetPlayer, itemType, itemName, finalCount)
     end
 )
 
@@ -126,6 +126,6 @@ RegisterNUICallback('takePlayer',
         end
         
         -- TargetPlayer (source) ให้ของ ตัวเอง (receiver)
-        TriggerServerEvent('section_inventory:req:player:tradeItem', 'take', TargetPlayer, itemType, itemName, finalCount)
+        TriggerServerEvent(InvEvent('req:player:tradeItem'), 'take', TargetPlayer, itemType, itemName, finalCount)
     end
 )

@@ -26,7 +26,7 @@ Citizen.CreateThread(function()
     -- Request Addon Items
     Citizen.Wait(5000)
     Debug('info', 'Requesting addon items...')
-    TriggerServerEvent('section_inventory:requestAddonItems')
+    TriggerServerEvent(InvEvent('requestAddonItems'))
     TriggerServerEvent("section_itemexpire:requestItems")
 end)
 
@@ -38,7 +38,7 @@ RegisterCommand(General.Config.Inventory.Main.Command, function()
 end, false)
 RegisterKeyMapping(General.Config.Inventory.Main.Command, 'Key for opening an inventory', 'keyboard', General.Config.Inventory.Main.Key)
 
-RegisterNetEvent('section_inventory:setAddonItems', 
+RegisterNetEvent(InvEvent('setAddonItems'), 
     function(accessories, keys)
         Inventory.Accessories = accessories
         Inventory.VehicleKeys = keys
@@ -47,7 +47,7 @@ RegisterNetEvent('section_inventory:setAddonItems',
     end
 )
 
-RegisterNetEvent('section_inventory:addNewAccessory', 
+RegisterNetEvent(InvEvent('addNewAccessory'), 
     function(accessorie)
         if not accessorie or not accessorie.name then
             print('^1ERROR: Received invalid accessory data^7')
@@ -64,7 +64,7 @@ RegisterNetEvent('section_inventory:addNewAccessory',
     end
 )
 
-RegisterNetEvent('section_inventory:removeAccessory', 
+RegisterNetEvent(InvEvent('removeAccessory'), 
     function(label)
         for i, acc in ipairs(Inventory.Accessories) do
             if acc.label == label or acc.name == label then
@@ -214,7 +214,7 @@ RegisterNUICallback('give',
         end)
 
         -- Execute give item
-        TriggerServerEvent('section_inventory:giveItem', modalId, itemData.name, itemAmount, itemData.type)
+        TriggerServerEvent(InvEvent('giveItem'), modalId, itemData.name, itemAmount, itemData.type)
         Debug('success', string.format('Gave %dx %s to player %d', itemAmount, itemData.label, modalId))
     end
 )
@@ -293,7 +293,7 @@ RegisterNUICallback('drop',
         RemoveAnimDict(dictionary)  
         Citizen.Wait(1000) -- Wait for animation to finish
 
-        TriggerServerEvent('section_inventory:dropItem', itemName, itemAmount, itemType, itemLabel)
+        TriggerServerEvent(InvEvent('dropItem'), itemName, itemAmount, itemType, itemLabel)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
         -- Refresh before after drop.
@@ -325,7 +325,7 @@ RegisterNUICallback('closeNuis',
     end
 )
 
-RegisterNetEvent('section_inventory:closeNuis', 
+RegisterNetEvent(InvEvent('closeNuis'), 
     function()
         Inventory.CloseInventory()
         Inventory.IsDrop = false
