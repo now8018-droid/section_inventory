@@ -308,12 +308,9 @@ RegisterNUICallback('drop',
         TriggerServerEvent(InvEvent('dropItem'), itemName, itemAmount, itemType, itemLabel)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
-        -- Refresh before after drop.
-        if not Inventory.IsDrop then 
-            Citizen.Wait(250)
-            Inventory.RefreshInventory()
-            Inventory.IsDrop = true
-        end
+        -- Refresh inventory after drop to keep client state in sync.
+        Citizen.Wait(250)
+        Inventory.RefreshInventory()
     end
 )
 
