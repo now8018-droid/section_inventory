@@ -5,7 +5,19 @@ READY = promise.new()
 
 --| Modules functions. |--
 Inventory = Functions.Inventory()
-Vault = exports['section_vaults']:getVault()
+local hasVaultExport, vaultModule = pcall(function()
+    return exports['section_vaults']:getVault()
+end)
+
+Vault = hasVaultExport and vaultModule or {
+    GetInventory = {
+        SpawnVaultObjects = function() end
+    }
+}
+
+if not hasVaultExport then
+    Debug('warn', '[Inventory] Missing export getVault from resource section_vaults; vault features disabled')
+end
 
 Citizen.CreateThread(function()
     while not NetworkIsPlayerActive(PlayerId()) do Citizen.Wait(100) end
