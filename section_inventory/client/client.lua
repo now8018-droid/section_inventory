@@ -30,26 +30,13 @@ Citizen.CreateThread(function()
     TriggerServerEvent("section_itemexpire:requestItems")
 end)
 
-local function OpenMainInventory()
-    if Utils.IsDead() then
-        return
+RegisterCommand(General.Config.Inventory.Main.Command, function()
+    if not Utils.IsDead() then
+        Citizen.Wait(100)
+        Inventory.InitInventory()
     end
-
-    Citizen.Wait(100)
-    Inventory.InitInventory()
-end
-
-local mainOpenCommand = General.Config.Inventory.Main.Command
-local mainOpenKey = tostring(General.Config.Inventory.Main.Key or 'T')
-local keyMappingCommand = ('%s.key.%s'):format(mainOpenCommand, string.lower(mainOpenKey))
-
-RegisterCommand(mainOpenCommand, OpenMainInventory, false)
-
-if keyMappingCommand ~= mainOpenCommand then
-    RegisterCommand(keyMappingCommand, OpenMainInventory, false)
-end
-
-RegisterKeyMapping(keyMappingCommand, 'Key for opening an inventory', 'keyboard', mainOpenKey)
+end, false)
+RegisterKeyMapping(General.Config.Inventory.Main.Command, 'Key for opening an inventory', 'keyboard', General.Config.Inventory.Main.Key)
 
 RegisterNetEvent(InvEvent('setAddonItems'), 
     function(accessories, keys)
