@@ -209,6 +209,19 @@ RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, item
         return
     end
 
+    if not itemType or itemType == '' then
+        if itemName == 'money' or itemName == 'black_money' then
+            itemType = 'item_account'
+        elseif type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName) then
+            itemType = 'item_weapon'
+        else
+            local invItem = xPlayer.getInventoryItem(itemName)
+            if invItem and (invItem.count or 0) > 0 then
+                itemType = 'item_standard'
+            end
+        end
+    end
+
     if itemType == 'item_standard' then
         local item = xPlayer.getInventoryItem(itemName)
         if not item or item.count < moveAmount then

@@ -305,7 +305,7 @@ RegisterNUICallback('drop',
             itemAmount = availableCount
         end
 
-        if not itemName or not itemType or itemAmount <= 0 then
+        if not itemName or itemAmount <= 0 then
             if cb then cb('error') end
             return
         end
