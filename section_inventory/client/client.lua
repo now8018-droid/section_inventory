@@ -319,15 +319,17 @@ RegisterNUICallback('drop',
             return
         end
 
-        local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
-        ESX.Streaming.RequestAnimDict(dictionary)
-        
-        TaskPlayAnim(PlayerPedId(), dictionary, animation, 8.0, 1.0, 1000, 16, 0.0, false, false, false)
-        RemoveAnimDict(dictionary)  
-        Citizen.Wait(1000) -- Wait for animation to finish
-
         TriggerServerEvent(InvEvent('dropItem'), itemName, itemAmount, itemType, itemLabel)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
+
+        local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
+        pcall(function()
+            if ESX and ESX.Streaming and type(ESX.Streaming.RequestAnimDict) == 'function' then
+                ESX.Streaming.RequestAnimDict(dictionary)
+                TaskPlayAnim(PlayerPedId(), dictionary, animation, 8.0, 1.0, 1000, 16, 0.0, false, false, false)
+                RemoveAnimDict(dictionary)
+            end
+        end)
 
         -- Refresh inventory after drop to keep client state in sync.
         Citizen.Wait(250)
