@@ -226,8 +226,8 @@ local function deleteItemFromPlayer(source, itemName, amount)
 
     local inventoryCount = inventoryItem and (inventoryItem.count or 0) or 0
     if inventoryCount > 0 then
-        xPlayer.removeInventoryItem(inventoryName, math.min(moveAmount, inventoryCount))
-        return true
+        local removed = xPlayer.removeInventoryItem(inventoryName, math.min(moveAmount, inventoryCount))
+        return removed ~= false
     end
 
     local account = xPlayer.getAccount(trimmedItemName)
@@ -239,14 +239,14 @@ local function deleteItemFromPlayer(source, itemName, amount)
 
     local accountMoney = account and (account.money or 0) or 0
     if accountMoney > 0 then
-        xPlayer.removeAccountMoney(accountName, math.min(moveAmount, accountMoney))
-        return true
+        local removed = xPlayer.removeAccountMoney(accountName, math.min(moveAmount, accountMoney))
+        return removed ~= false
     end
 
     local cash = type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() or 0
     if lowerItemName == 'money' and cash > 0 then
-        xPlayer.removeMoney(math.min(moveAmount, cash))
-        return true
+        local removed = xPlayer.removeMoney(math.min(moveAmount, cash))
+        return removed ~= false
     end
 
     if type(xPlayer.hasWeapon) == 'function' then
