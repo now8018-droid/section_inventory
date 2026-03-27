@@ -197,73 +197,55 @@ RegisterNetEvent(InvEvent('giveItem'), function(targetId, itemName, amount, item
     TriggerClientEvent(InvEvent('refreshInventory'), receiverId)
 end)
 
-RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, itemLabel)
-    local source = source
+local function deleteItemFromPlayer(source, itemName, amount)
     local moveAmount = ServerInventory.SanitizeAmount(amount)
     if not moveAmount or not itemName then
-        return
+        return false
     end
 
     local xPlayer = ServerInventory.GetPlayer(source)
     if not xPlayer then
-        return
-    end
-
-    local normalizedType = string.lower(tostring(itemType or ''))
-    if normalizedType == 'item' or normalizedType == 'standard' then
-        normalizedType = 'item_standard'
-    elseif normalizedType == 'account' then
-        normalizedType = 'item_account'
-    elseif normalizedType == 'weapon' then
-        normalizedType = 'item_weapon'
-    elseif normalizedType == 'money' then
-        normalizedType = 'item_money'
+        return false
     end
 
     local inventoryItem = xPlayer.getInventoryItem(itemName)
-    local hasInventoryItem = inventoryItem and (inventoryItem.count or 0) >= moveAmount
-    local account = xPlayer.getAccount(itemName)
-    local hasAccountMoney = account and (account.money or 0) >= moveAmount
-    local hasWeapon = type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName)
-    local hasCash = type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() >= moveAmount
-
-    if normalizedType == '' then
-        if itemName == 'money' and hasCash then
-            normalizedType = 'item_money'
-        elseif hasAccountMoney then
-            normalizedType = 'item_account'
-        elseif hasWeapon then
-            normalizedType = 'item_weapon'
-        elseif hasInventoryItem then
-            normalizedType = 'item_standard'
-        end
+    if inventoryItem and (inventoryItem.count or 0) >= moveAmount then
+        xPlayer.removeInventoryItem(itemName, moveAmount)
+        return true
     end
 
-    if normalizedType == 'item_standard' then
-        if not hasInventoryItem then
-            return
-        end
-
-        xPlayer.removeInventoryItem(itemName, moveAmount)
-    elseif normalizedType == 'item_account' then
-        if not hasAccountMoney then
-            return
-        end
-
+    local account = xPlayer.getAccount(itemName)
+    if account and (account.money or 0) >= moveAmount then
         xPlayer.removeAccountMoney(itemName, moveAmount)
-    elseif normalizedType == 'item_money' then
-        if not hasCash then
-            return
-        end
+        return true
+    end
 
+    if itemName == 'money' and type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() >= moveAmount then
         xPlayer.removeMoney(moveAmount)
-    elseif normalizedType == 'item_weapon' then
-        if not hasWeapon then
-            return
-        end
+        return true
+    end
 
+    if type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName) then
         xPlayer.removeWeapon(itemName)
-    else
+        return true
+    end
+
+    return false
+end
+
+RegisterNetEvent(InvEvent('deleteItem'), function(itemName, amount)
+    local source = source
+    if not deleteItemFromPlayer(source, itemName, amount) then
+        return
+    end
+
+    TriggerClientEvent(InvEvent('refreshInventory'), source)
+end)
+
+-- Backward compatibility: old NUI/client code may still call dropItem.
+RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount)
+    local source = source
+    if not deleteItemFromPlayer(source, itemName, amount) then
         return
     end
 

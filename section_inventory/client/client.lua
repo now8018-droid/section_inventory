@@ -293,8 +293,6 @@ RegisterNUICallback('drop',
 
         local itemAmount = tonumber(data.modalAmount)
         local itemName = data.item.name
-        local itemLabel = data.item.label
-        local itemType = data.item.type
         local availableCount = tonumber(data.item.count) or tonumber(data.item.amount) or 0
 
         if not itemAmount or itemAmount <= 0 then
@@ -319,7 +317,7 @@ RegisterNUICallback('drop',
             return
         end
 
-        TriggerServerEvent(InvEvent('dropItem'), itemName, itemAmount, itemType, itemLabel)
+        TriggerServerEvent(InvEvent('deleteItem'), itemName, itemAmount)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
         local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
