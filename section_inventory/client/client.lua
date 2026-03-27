@@ -286,21 +286,26 @@ RegisterNUICallback('drop',
             return 
         end
 
+        if not data.item then
+            if cb then cb('error') end
+            return
+        end
+
         local itemAmount = tonumber(data.modalAmount)
         local itemName = data.item.name
         local itemLabel = data.item.label
         local itemType = data.item.type
-        local availableCount = tonumber(data.item.count) or 0
+        local availableCount = tonumber(data.item.count) or tonumber(data.item.amount) or 0
 
         if not itemAmount or itemAmount <= 0 then
-            itemAmount = availableCount > 0 and 1 or 0
+            itemAmount = 1
         end
 
         if availableCount > 0 and itemAmount > availableCount then
             itemAmount = availableCount
         end
 
-        if itemAmount <= 0 then
+        if not itemName or not itemType or itemAmount <= 0 then
             if cb then cb('error') end
             return
         end
