@@ -5,7 +5,19 @@ READY = promise.new()
 
 --| Modules functions. |--
 Inventory = Functions.Inventory()
-Vault = exports['section_vaults']:getVault()
+local hasVaultExport, vaultModule = pcall(function()
+    return exports['section_vaults']:getVault()
+end)
+
+Vault = hasVaultExport and vaultModule or {
+    GetInventory = {
+        SpawnVaultObjects = function() end
+    }
+}
+
+if not hasVaultExport then
+    Debug('warn', '[Inventory] Missing export getVault from resource section_vaults; vault features disabled')
+end
 
 Citizen.CreateThread(function()
     while not NetworkIsPlayerActive(PlayerId()) do Citizen.Wait(100) end
@@ -267,41 +279,70 @@ RegisterNUICallback('use',
 
 --| Drop Item. |--
 RegisterNUICallback('drop', 
-    function(data)
+    function(data, cb)
         if not data then 
             print('Drop Error: No data received!')
+            if cb then cb('error') end
             return 
         end
 
-        local itemAmount = tonumber(data.modalAmount)
-        local itemName = data.item.name
-        local itemLabel = data.item.label
-        local itemType = data.item.type
+        if not data.item then
+            if cb then cb('error') end
+            return
+        end
 
-        if not Inventory.IsItemDroppable(itemName) then 
+        local itemData = data.item or {}
+        local itemAmount = tonumber(data.modalAmount) or tonumber(data.amount) or tonumber(itemData.modalAmount)
+        local itemName = itemData.name or itemData.Name or itemData.itemName
+        local availableCount = tonumber(itemData.count)
+            or tonumber(itemData.Count)
+            or tonumber(itemData.amount)
+            or tonumber(itemData.Amount)
+            or 0
+
+        if not itemAmount or itemAmount <= 0 then
+            itemAmount = 1
+        end
+
+        if availableCount > 0 and itemAmount > availableCount then
+            itemAmount = availableCount
+        end
+
+        if not itemName or itemAmount <= 0 then
+            if cb then cb('error') end
+            return
+        end
+
+        if not Inventory.IsItemDroppable(itemName) then
             pcall(function()
                 Notification.Push.Executor('error', nil, 'CannotDropItem', itemName)
             end)
 
+            if cb then cb('error') end
             return
         end
 
-        local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
-        ESX.Streaming.RequestAnimDict(dictionary)
-        
-        TaskPlayAnim(PlayerPedId(), dictionary, animation, 8.0, 1.0, 1000, 16, 0.0, false, false, false)
-        RemoveAnimDict(dictionary)  
-        Citizen.Wait(1000) -- Wait for animation to finish
+        local deleteEventName = 'deleteItem'
+        if type(InvEvent) == 'function' then
+            deleteEventName = InvEvent('deleteItem')
+        end
 
-        TriggerServerEvent(InvEvent('dropItem'), itemName, itemAmount, itemType, itemLabel)
+        TriggerServerEvent(deleteEventName, itemName, itemAmount)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
-        -- Refresh before after drop.
-        if not Inventory.IsDrop then 
-            Citizen.Wait(250)
-            Inventory.RefreshInventory()
-            Inventory.IsDrop = true
-        end
+        local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
+        pcall(function()
+            if ESX and ESX.Streaming and type(ESX.Streaming.RequestAnimDict) == 'function' then
+                ESX.Streaming.RequestAnimDict(dictionary)
+                TaskPlayAnim(PlayerPedId(), dictionary, animation, 8.0, 1.0, 1000, 16, 0.0, false, false, false)
+                RemoveAnimDict(dictionary)
+            end
+        end)
+
+        -- Refresh inventory after drop to keep client state in sync.
+        Citizen.Wait(250)
+        Inventory.RefreshInventory()
+        if cb then cb('ok') end
     end
 )
 
@@ -319,14 +360,19 @@ RegisterNetEvent('esx:addWeapon', function(_) Citizen.Wait(100) Inventory.Refres
 RegisterNetEvent('esx:removeWeapon', function(_) Citizen.Wait(100) Inventory.RefreshInventory() end)
 
 RegisterNUICallback('closeNuis',
-    function(_)
+    function(_, cb)
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
         Inventory.CloseInventory()
         Inventory.IsDrop = false
+        if cb then cb('ok') end
     end
 )
 
 RegisterNetEvent(InvEvent('closeNuis'), 
     function()
+        SetNuiFocus(false, false)
+        SetNuiFocusKeepInput(false)
         Inventory.CloseInventory()
         Inventory.IsDrop = false
     end
@@ -338,3 +384,21 @@ RegisterNUICallback('NuisReady',
         cb('ready')
     end
 )
+
+-- Failsafe: if ESC is pressed while inventory state is still open, force-release NUI focus.
+Citizen.CreateThread(function()
+    while true do
+        if not (Inventory and Inventory.IsOpen) then
+            Citizen.Wait(250)
+        else
+            Citizen.Wait(0)
+        end
+
+        if Inventory and Inventory.IsOpen and IsControlJustReleased(0, 322) then -- ESC
+            SetNuiFocus(false, false)
+            SetNuiFocusKeepInput(false)
+            Inventory.CloseInventory()
+            Inventory.IsDrop = false
+        end
+    end
+end)

@@ -131,6 +131,7 @@ Functions = {
         
         --| Inventory Items |--
         self.Initial = false
+        self.IsOpen = false
         self.IsDrop = false
         self.IsBusy = false
         self.AddOnLoaded = false
@@ -161,6 +162,7 @@ Functions = {
 
         self.OpenInventory = function()
             self.Initial = true
+            self.IsOpen = true
             self.NuiFocus(true)
 
             Utils.SendNui('open-inventory')
@@ -173,7 +175,6 @@ Functions = {
 
         self.InitInventory = function()
             if not self.Initial then
-                self.OpenInventory()
                 self.Initial = true 
             end
 
@@ -296,7 +297,8 @@ Functions = {
         self.AddAccessories = function()
             local accessories = self.Accessories or {}
             if #accessories == 0 then
-                print('^1ERROR: No accessories found^7')
+                Debug('info', '[Inventory] No accessories found')
+                return
             end
 
             for _, accessory in ipairs(accessories) do
@@ -551,7 +553,9 @@ Functions = {
         end
         
         self.CloseInventory = function()
+            self.IsOpen = false
             self.NuiFocus(false)
+            SetNuiFocusKeepInput(false)
             Utils.SendNui('close-inventory')
         end
 

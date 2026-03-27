@@ -18,7 +18,27 @@ local waitTime = 1500
 
 --| Modules functions. |--
 Inventory = Functions.Inventory()
-Vault = exports['section_vaults']:getVault()
+local hasVaultExport, vaultModule = pcall(function()
+    return exports['section_vaults']:getVault()
+end)
+
+Vault = hasVaultExport and vaultModule or {
+    GetInventory = {
+        JobType = nil,
+        CompileVaultItems = function()
+            return {}
+        end
+    },
+    GetValidItems = {
+        BlackLists = function()
+            return false
+        end
+    }
+}
+
+if not hasVaultExport then
+    Debug('warn', '[Vault] Missing export getVault from resource section_vaults; vault interactions disabled')
+end
 
 RegisterNetEvent('msc.vault:opened', 
     function(itemData, vaultType)

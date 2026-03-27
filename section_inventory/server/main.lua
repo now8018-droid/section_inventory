@@ -197,53 +197,100 @@ RegisterNetEvent(InvEvent('giveItem'), function(targetId, itemName, amount, item
     TriggerClientEvent(InvEvent('refreshInventory'), receiverId)
 end)
 
-RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, itemLabel)
-    local source = source
+local function deleteItemFromPlayer(source, itemName, amount)
+    local rawItemName = tostring(itemName or '')
+    local trimmedItemName = rawItemName:gsub('^%s+', ''):gsub('%s+$', '')
+    if trimmedItemName == '' then
+        return false
+    end
+
+    local lowerItemName = string.lower(trimmedItemName)
+    local upperItemName = string.upper(trimmedItemName)
+
     local moveAmount = ServerInventory.SanitizeAmount(amount)
     if not moveAmount then
-        return
+        return false
     end
 
     local xPlayer = ServerInventory.GetPlayer(source)
     if not xPlayer then
-        return
+        return false
     end
 
-    if itemType == 'item_standard' then
-        local item = xPlayer.getInventoryItem(itemName)
-        if not item or item.count < moveAmount then
-            return
-        end
-
-        xPlayer.removeInventoryItem(itemName, moveAmount)
-    elseif itemType == 'item_account' then
-        local account = xPlayer.getAccount(itemName)
-        if not account or account.money < moveAmount then
-            return
-        end
-
-        xPlayer.removeAccountMoney(itemName, moveAmount)
-    elseif itemType == 'item_money' then
-        if xPlayer.getMoney() < moveAmount then
-            return
-        end
-
-        xPlayer.removeMoney(moveAmount)
-    elseif itemType == 'item_weapon' then
-        if not xPlayer.hasWeapon(itemName) then
-            return
-        end
-
-        xPlayer.removeWeapon(itemName)
-    else
-        return
+    local inventoryItem = xPlayer.getInventoryItem(trimmedItemName)
+    local inventoryName = trimmedItemName
+    if (not inventoryItem or (inventoryItem.count or 0) <= 0) and lowerItemName ~= trimmedItemName then
+        inventoryItem = xPlayer.getInventoryItem(lowerItemName)
+        inventoryName = lowerItemName
     end
 
-    local coords = GetEntityCoords(GetPlayerPed(source))
-    TriggerEvent('esx:createPickup', itemType, itemName, moveAmount, itemLabel or itemName, source, coords)
+    local inventoryCount = inventoryItem and (inventoryItem.count or 0) or 0
+    if inventoryCount > 0 then
+        local removed = xPlayer.removeInventoryItem(inventoryName, math.min(moveAmount, inventoryCount))
+        return removed ~= false
+    end
+
+    local account = xPlayer.getAccount(trimmedItemName)
+    local accountName = trimmedItemName
+    if (not account or (account.money or 0) <= 0) and lowerItemName ~= trimmedItemName then
+        account = xPlayer.getAccount(lowerItemName)
+        accountName = lowerItemName
+    end
+
+    local accountMoney = account and (account.money or 0) or 0
+    if accountMoney > 0 then
+        local removed = xPlayer.removeAccountMoney(accountName, math.min(moveAmount, accountMoney))
+        return removed ~= false
+    end
+
+    local cash = type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() or 0
+    if lowerItemName == 'money' and cash > 0 then
+        local removed = xPlayer.removeMoney(math.min(moveAmount, cash))
+        return removed ~= false
+    end
+
+    if type(xPlayer.hasWeapon) == 'function' then
+        if xPlayer.hasWeapon(trimmedItemName) then
+            xPlayer.removeWeapon(trimmedItemName)
+            return true
+        end
+
+        if upperItemName ~= trimmedItemName and xPlayer.hasWeapon(upperItemName) then
+            xPlayer.removeWeapon(upperItemName)
+            return true
+        end
+
+        if lowerItemName ~= trimmedItemName and xPlayer.hasWeapon(lowerItemName) then
+            xPlayer.removeWeapon(lowerItemName)
+            return true
+        end
+    end
+
+    return false
+end
+
+local function handleDeleteItemEvent(itemName, amount)
+    local source = source
+    if not deleteItemFromPlayer(source, itemName, amount) then
+        return
+    end
 
     TriggerClientEvent(InvEvent('refreshInventory'), source)
-end)
+end
+
+local function registerDeleteEvent(eventName)
+    RegisterNetEvent(eventName)
+    AddEventHandler(eventName, handleDeleteItemEvent)
+end
+
+registerDeleteEvent(InvEvent('deleteItem'))
+registerDeleteEvent(InvEvent('dropItem'))
+
+-- Compatibility with older/non-prefixed event names from legacy clients.
+registerDeleteEvent('section_inventory:deleteItem')
+registerDeleteEvent('section_inventory:dropItem')
+registerDeleteEvent('deleteItem')
+registerDeleteEvent('dropItem')
 
 AddEventHandler('playerDropped', function()
     local source = source

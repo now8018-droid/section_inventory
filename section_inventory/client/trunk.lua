@@ -17,7 +17,36 @@ local TriggerServerEvent = TriggerServerEvent
 
 --| Modules functions. |--
 Inventory = Functions.Inventory()
-Trunk = exports['msc.trunk']:getTrunk()
+local hasTrunkExport, trunkModule = pcall(function()
+    return exports['msc.trunk']:getTrunk()
+end)
+
+Trunk = hasTrunkExport and trunkModule or {
+    GetInventory = {
+        Items = {},
+        CurrentPlate = nil,
+        VehicleClass = nil,
+        ModelName = nil,
+        OpenNearestTrunk = function()
+            return nil, nil, nil, nil
+        end,
+        CompileTrunkItems = function()
+            return {}, 0
+        end,
+        GetItemLimit = function()
+            return -1
+        end
+    },
+    GetValidItems = {
+        BlackLists = function()
+            return false
+        end
+    }
+}
+
+if not hasTrunkExport then
+    Debug('warn', '[Trunk] Missing export getTrunk from resource msc.trunk; trunk interactions disabled')
+end
 local ModelName = nil
 
 RegisterCommand('msc.trunk.open', function()
