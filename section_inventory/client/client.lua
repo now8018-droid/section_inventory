@@ -291,9 +291,14 @@ RegisterNUICallback('drop',
             return
         end
 
-        local itemAmount = tonumber(data.modalAmount)
-        local itemName = data.item.name
-        local availableCount = tonumber(data.item.count) or tonumber(data.item.amount) or 0
+        local itemData = data.item or {}
+        local itemAmount = tonumber(data.modalAmount) or tonumber(data.amount) or tonumber(itemData.modalAmount)
+        local itemName = itemData.name or itemData.Name or itemData.itemName
+        local availableCount = tonumber(itemData.count)
+            or tonumber(itemData.Count)
+            or tonumber(itemData.amount)
+            or tonumber(itemData.Amount)
+            or 0
 
         if not itemAmount or itemAmount <= 0 then
             itemAmount = 1
