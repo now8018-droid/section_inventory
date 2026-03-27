@@ -200,7 +200,7 @@ end)
 RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, itemLabel)
     local source = source
     local moveAmount = ServerInventory.SanitizeAmount(amount)
-    if not moveAmount then
+    if not moveAmount or not itemName then
         return
     end
 
@@ -209,41 +209,56 @@ RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, item
         return
     end
 
-    if not itemType or itemType == '' then
-        if itemName == 'money' or itemName == 'black_money' then
-            itemType = 'item_account'
-        elseif type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName) then
-            itemType = 'item_weapon'
-        else
-            local invItem = xPlayer.getInventoryItem(itemName)
-            if invItem and (invItem.count or 0) > 0 then
-                itemType = 'item_standard'
-            end
+    local normalizedType = string.lower(tostring(itemType or ''))
+    if normalizedType == 'item' or normalizedType == 'standard' then
+        normalizedType = 'item_standard'
+    elseif normalizedType == 'account' then
+        normalizedType = 'item_account'
+    elseif normalizedType == 'weapon' then
+        normalizedType = 'item_weapon'
+    elseif normalizedType == 'money' then
+        normalizedType = 'item_money'
+    end
+
+    local inventoryItem = xPlayer.getInventoryItem(itemName)
+    local hasInventoryItem = inventoryItem and (inventoryItem.count or 0) >= moveAmount
+    local account = xPlayer.getAccount(itemName)
+    local hasAccountMoney = account and (account.money or 0) >= moveAmount
+    local hasWeapon = type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName)
+    local hasCash = type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() >= moveAmount
+
+    if normalizedType == '' then
+        if itemName == 'money' and hasCash then
+            normalizedType = 'item_money'
+        elseif hasAccountMoney then
+            normalizedType = 'item_account'
+        elseif hasWeapon then
+            normalizedType = 'item_weapon'
+        elseif hasInventoryItem then
+            normalizedType = 'item_standard'
         end
     end
 
-    if itemType == 'item_standard' then
-        local item = xPlayer.getInventoryItem(itemName)
-        if not item or item.count < moveAmount then
+    if normalizedType == 'item_standard' then
+        if not hasInventoryItem then
             return
         end
 
         xPlayer.removeInventoryItem(itemName, moveAmount)
-    elseif itemType == 'item_account' then
-        local account = xPlayer.getAccount(itemName)
-        if not account or account.money < moveAmount then
+    elseif normalizedType == 'item_account' then
+        if not hasAccountMoney then
             return
         end
 
         xPlayer.removeAccountMoney(itemName, moveAmount)
-    elseif itemType == 'item_money' then
-        if xPlayer.getMoney() < moveAmount then
+    elseif normalizedType == 'item_money' then
+        if not hasCash then
             return
         end
 
         xPlayer.removeMoney(moveAmount)
-    elseif itemType == 'item_weapon' then
-        if not xPlayer.hasWeapon(itemName) then
+    elseif normalizedType == 'item_weapon' then
+        if not hasWeapon then
             return
         end
 
