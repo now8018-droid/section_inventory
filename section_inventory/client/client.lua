@@ -279,9 +279,10 @@ RegisterNUICallback('use',
 
 --| Drop Item. |--
 RegisterNUICallback('drop', 
-    function(data)
+    function(data, cb)
         if not data then 
             print('Drop Error: No data received!')
+            if cb then cb('error') end
             return 
         end
 
@@ -289,12 +290,27 @@ RegisterNUICallback('drop',
         local itemName = data.item.name
         local itemLabel = data.item.label
         local itemType = data.item.type
+        local availableCount = tonumber(data.item.count) or 0
+
+        if not itemAmount or itemAmount <= 0 then
+            itemAmount = availableCount > 0 and 1 or 0
+        end
+
+        if availableCount > 0 and itemAmount > availableCount then
+            itemAmount = availableCount
+        end
+
+        if itemAmount <= 0 then
+            if cb then cb('error') end
+            return
+        end
 
         if not Inventory.IsItemDroppable(itemName) then 
             pcall(function()
                 Notification.Push.Executor('error', nil, 'CannotDropItem', itemName)
             end)
 
+            if cb then cb('error') end
             return
         end
 
@@ -311,6 +327,7 @@ RegisterNUICallback('drop',
         -- Refresh inventory after drop to keep client state in sync.
         Citizen.Wait(250)
         Inventory.RefreshInventory()
+        if cb then cb('ok') end
     end
 )
 
