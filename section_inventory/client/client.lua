@@ -317,7 +317,12 @@ RegisterNUICallback('drop',
             return
         end
 
-        TriggerServerEvent(InvEvent('deleteItem'), itemName, itemAmount)
+        local deleteEventName = 'deleteItem'
+        if type(InvEvent) == 'function' then
+            deleteEventName = InvEvent('deleteItem')
+        end
+
+        TriggerServerEvent(deleteEventName, itemName, itemAmount)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
         local dictionary, animation = 'weapons@first_person@aim_rng@generic@projectile@sticky_bomb@', 'plant_floor'
