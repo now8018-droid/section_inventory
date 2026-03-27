@@ -198,10 +198,14 @@ RegisterNetEvent(InvEvent('giveItem'), function(targetId, itemName, amount, item
 end)
 
 local function deleteItemFromPlayer(source, itemName, amount)
-    itemName = tostring(itemName or '')
-    if itemName == '' then
+    local rawItemName = tostring(itemName or '')
+    local trimmedItemName = rawItemName:gsub('^%s+', ''):gsub('%s+$', '')
+    if trimmedItemName == '' then
         return false
     end
+
+    local lowerItemName = string.lower(trimmedItemName)
+    local upperItemName = string.upper(trimmedItemName)
 
     local moveAmount = ServerInventory.SanitizeAmount(amount)
     if not moveAmount then
@@ -213,29 +217,53 @@ local function deleteItemFromPlayer(source, itemName, amount)
         return false
     end
 
-    local inventoryItem = xPlayer.getInventoryItem(itemName)
+    local inventoryItem = xPlayer.getInventoryItem(trimmedItemName)
+    local inventoryName = trimmedItemName
+    if (not inventoryItem or (inventoryItem.count or 0) <= 0) and lowerItemName ~= trimmedItemName then
+        inventoryItem = xPlayer.getInventoryItem(lowerItemName)
+        inventoryName = lowerItemName
+    end
+
     local inventoryCount = inventoryItem and (inventoryItem.count or 0) or 0
     if inventoryCount > 0 then
-        xPlayer.removeInventoryItem(itemName, math.min(moveAmount, inventoryCount))
+        xPlayer.removeInventoryItem(inventoryName, math.min(moveAmount, inventoryCount))
         return true
     end
 
-    local account = xPlayer.getAccount(itemName)
+    local account = xPlayer.getAccount(trimmedItemName)
+    local accountName = trimmedItemName
+    if (not account or (account.money or 0) <= 0) and lowerItemName ~= trimmedItemName then
+        account = xPlayer.getAccount(lowerItemName)
+        accountName = lowerItemName
+    end
+
     local accountMoney = account and (account.money or 0) or 0
     if accountMoney > 0 then
-        xPlayer.removeAccountMoney(itemName, math.min(moveAmount, accountMoney))
+        xPlayer.removeAccountMoney(accountName, math.min(moveAmount, accountMoney))
         return true
     end
 
     local cash = type(xPlayer.getMoney) == 'function' and xPlayer.getMoney() or 0
-    if itemName == 'money' and cash > 0 then
+    if lowerItemName == 'money' and cash > 0 then
         xPlayer.removeMoney(math.min(moveAmount, cash))
         return true
     end
 
-    if type(xPlayer.hasWeapon) == 'function' and xPlayer.hasWeapon(itemName) then
-        xPlayer.removeWeapon(itemName)
-        return true
+    if type(xPlayer.hasWeapon) == 'function' then
+        if xPlayer.hasWeapon(trimmedItemName) then
+            xPlayer.removeWeapon(trimmedItemName)
+            return true
+        end
+
+        if upperItemName ~= trimmedItemName and xPlayer.hasWeapon(upperItemName) then
+            xPlayer.removeWeapon(upperItemName)
+            return true
+        end
+
+        if lowerItemName ~= trimmedItemName and xPlayer.hasWeapon(lowerItemName) then
+            xPlayer.removeWeapon(lowerItemName)
+            return true
+        end
     end
 
     return false
