@@ -198,8 +198,13 @@ RegisterNetEvent(InvEvent('giveItem'), function(targetId, itemName, amount, item
 end)
 
 local function deleteItemFromPlayer(source, itemName, amount)
+    itemName = tostring(itemName or '')
+    if itemName == '' then
+        return false
+    end
+
     local moveAmount = ServerInventory.SanitizeAmount(amount)
-    if not moveAmount or not itemName then
+    if not moveAmount then
         return false
     end
 
@@ -236,24 +241,23 @@ local function deleteItemFromPlayer(source, itemName, amount)
     return false
 end
 
-RegisterNetEvent(InvEvent('deleteItem'), function(itemName, amount)
+local function handleDeleteItemEvent(itemName, amount)
     local source = source
     if not deleteItemFromPlayer(source, itemName, amount) then
         return
     end
 
     TriggerClientEvent(InvEvent('refreshInventory'), source)
-end)
+end
 
--- Backward compatibility: old NUI/client code may still call dropItem.
-RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount)
-    local source = source
-    if not deleteItemFromPlayer(source, itemName, amount) then
-        return
-    end
+RegisterNetEvent(InvEvent('deleteItem'), handleDeleteItemEvent)
+RegisterNetEvent(InvEvent('dropItem'), handleDeleteItemEvent)
 
-    TriggerClientEvent(InvEvent('refreshInventory'), source)
-end)
+-- Compatibility with older/non-prefixed event names from legacy clients.
+RegisterNetEvent('section_inventory:deleteItem', handleDeleteItemEvent)
+RegisterNetEvent('section_inventory:dropItem', handleDeleteItemEvent)
+RegisterNetEvent('deleteItem', handleDeleteItemEvent)
+RegisterNetEvent('dropItem', handleDeleteItemEvent)
 
 AddEventHandler('playerDropped', function()
     local source = source
