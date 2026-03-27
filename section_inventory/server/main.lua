@@ -252,9 +252,6 @@ RegisterNetEvent(InvEvent('dropItem'), function(itemName, amount, itemType, item
         return
     end
 
-    local coords = GetEntityCoords(GetPlayerPed(source))
-    TriggerEvent('esx:createPickup', itemType, itemName, moveAmount, itemLabel or itemName, source, coords)
-
     TriggerClientEvent(InvEvent('refreshInventory'), source)
 end)
 
