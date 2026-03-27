@@ -278,14 +278,19 @@ local function handleDeleteItemEvent(itemName, amount)
     TriggerClientEvent(InvEvent('refreshInventory'), source)
 end
 
-RegisterNetEvent(InvEvent('deleteItem'), handleDeleteItemEvent)
-RegisterNetEvent(InvEvent('dropItem'), handleDeleteItemEvent)
+local function registerDeleteEvent(eventName)
+    RegisterNetEvent(eventName)
+    AddEventHandler(eventName, handleDeleteItemEvent)
+end
+
+registerDeleteEvent(InvEvent('deleteItem'))
+registerDeleteEvent(InvEvent('dropItem'))
 
 -- Compatibility with older/non-prefixed event names from legacy clients.
-RegisterNetEvent('section_inventory:deleteItem', handleDeleteItemEvent)
-RegisterNetEvent('section_inventory:dropItem', handleDeleteItemEvent)
-RegisterNetEvent('deleteItem', handleDeleteItemEvent)
-RegisterNetEvent('dropItem', handleDeleteItemEvent)
+registerDeleteEvent('section_inventory:deleteItem')
+registerDeleteEvent('section_inventory:dropItem')
+registerDeleteEvent('deleteItem')
+registerDeleteEvent('dropItem')
 
 AddEventHandler('playerDropped', function()
     local source = source
