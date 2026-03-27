@@ -308,15 +308,6 @@ RegisterNUICallback('drop',
             return
         end
 
-        if not Inventory.IsItemDroppable(itemName) then 
-            pcall(function()
-                Notification.Push.Executor('error', nil, 'CannotDropItem', itemName)
-            end)
-
-            if cb then cb('error') end
-            return
-        end
-
         TriggerServerEvent(InvEvent('deleteItem'), itemName, itemAmount)
         PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 
